@@ -35,15 +35,54 @@ Actúa como un QA Lead Senior con experiencia en testing funcional, automatizaci
 
 Analiza la siguiente historia de usuario.
 
+Genera casos de prueba completos.
+
 Devuelve EXCLUSIVAMENTE un JSON válido con esta estructura:
 
 {{
-  "functional": [],
-  "negative": [],
-  "edge_cases": [],
+  "functional": [
+    {{
+      "id": "",
+      "title": "",
+      "precondition": "",
+      "steps": [],
+      "expected_result": "",
+      "priority": ""
+    }}
+  ],
+  "negative": [
+    {{
+      "id": "",
+      "title": "",
+      "precondition": "",
+      "steps": [],
+      "expected_result": "",
+      "priority": ""
+    }}
+  ],
+  "edge_cases": [
+    {{
+      "id": "",
+      "title": "",
+      "precondition": "",
+      "steps": [],
+      "expected_result": "",
+      "priority": ""
+    }}
+  ],
   "risks": [],
   "automation": []
 }}
+
+Reglas:
+
+- Genera mínimo 5 casos funcionales.
+- Genera mínimo 5 negativos.
+- Genera mínimo 5 casos límite.
+- La prioridad debe ser Alta, Media o Baja.
+- Los pasos deben venir como lista.
+- El resultado esperado debe ser detallado.
+- Devuelve únicamente JSON.
 
 Historia:
 
@@ -204,8 +243,24 @@ if analyze:
     ])
 
     with tab1:
-        for item in result["functional"]:
-            st.success(item)
+       for tc in result["functional"]:
+
+        with st.expander(
+            f"{tc['id']} - {tc['title']}"
+        ):
+
+
+         st.write(f"**Prioridad:** {tc['priority']}")
+         st.write(f"**Precondición:** {tc['precondition']}")
+
+         st.write("**Pasos:**")
+
+         for step in tc["steps"]:
+                st.write(f"- {step}")
+
+        st.write(
+                f"**Resultado esperado:** {tc['expected_result']}"
+            )
 
     with tab2:
         for item in result["negative"]:
