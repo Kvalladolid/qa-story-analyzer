@@ -1,0 +1,15 @@
+.stApp{
+    background-color:#0F172A;
+}
+
+[data-testid="stMetric"]{
+    background:#1E293B;
+    border:1px solid #334155;
+    border-radius:12px;
+    padding:18px;
+}
+
+div[data-testid="stExpander"]{
+    border:1px solid #334155;
+    border-radius:12px;
+}

@@ -7,7 +7,18 @@ from io import BytesIO
 from openpyxl import Workbook
 
 
+from pathlib import Path
 
+def load_css():
+    css_file = Path("styles/main.css")
+
+    with open(css_file) as f:
+        st.markdown(
+            f"<style>{f.read()}</style>",
+            unsafe_allow_html=True
+        )
+
+load_css()
 # =========================
 # CONFIGURACIÓN
 # =========================
@@ -45,6 +56,14 @@ def analyze_story(story):
  Devuelve EXCLUSIVAMENTE un JSON válido con esta estructura:
 
 {{
+  "qa_effort": {{
+    "complexity": "",
+    "estimated_hours": 0,
+    "manual_test_cases": 0,
+    "automation_candidates": 0,
+    "recommendation": ""
+  }},
+
   "quality_score": {{
     "overall": 0,
     "clarity": 0,
@@ -52,12 +71,12 @@ def analyze_story(story):
     "testability": 0,
     "risk_level": 0
   }},
-  
-   "definition_of_ready": {{
+
+  "definition_of_ready": {{
     "status": "",
     "reason": ""
   }},
-  
+
   "functional": [],
   "negative": [],
   "edge_cases": [],
@@ -95,6 +114,28 @@ overall:
   30% completitud
   30% testabilidad
   10% riesgo
+  
+QA Estimation
+Calcula el esfuerzo de QA considerando:
+- Cantidad de reglas de negocio.
+- Complejidad funcional.
+- Cantidad de validaciones.
+- Casos negativos requeridos.
+- Casos límite requeridos.
+- Riesgos identificados.
+Devuelve:
+complexity:
+- Baja
+- Media
+- Alta
+estimated_hours:
+- Número estimado de horas QA.
+manual_test_cases:
+- Cantidad estimada de casos manuales.
+automation_candidates:
+- Cantidad estimada de casos automatizables.
+recommendation:
+- Explicación breve del esfuerzo.
 
 Genera preguntas para el Product Owner o Business Analyst.
 
@@ -327,11 +368,19 @@ def generate_excel(result):
 # =========================
 
 st.title("🧪 QA Story Analyzer")
-
 st.caption(
-    "Analiza historias de usuario, identifica riesgos y genera escenarios de prueba con IA"
+    "AI-Powered Requirements Intelligence"
 )
 
+st.markdown(
+    """
+     Analiza historias de usuario, detecta ambigüedades,
+    evalúa su calidad y determina si están listas para desarrollo.
+    """
+)
+st.markdown("""
+
+""", unsafe_allow_html=True)
 st.markdown("---")
 
 story = st.text_area(
@@ -367,6 +416,7 @@ if analyze:
 
         result = analyze_story(story)
         score = result["quality_score"]
+        dor = result["definition_of_ready"]
 
     st.markdown("---")
 
@@ -380,17 +430,80 @@ if analyze:
     s4.metric("🧪 Testabilidad", score["testability"])
     s5.metric("⚠️ Riesgo", score["risk_level"])
 
-    if score["overall"] >= 80:
-        st.success("🟢 Historia lista para desarrollo")
+    st.subheader("🚦 Definition of Ready")
 
-    elif score["overall"] >= 60:
-        st.warning("🟡 Historia requiere aclaraciones")
+    if dor["status"] == "READY":
+      st.success(
+        f"✅ {dor['status']} - {dor['reason']}"
+    )
+
+    elif dor["status"] == "PARTIALLY_READY":
+      st.warning(
+        f"⚠️ {dor['status']} - {dor['reason']}"
+    )
 
     else:
-        st.error("🔴 Historia no recomendada para iniciar desarrollo")
+     st.error(
+        f"❌ {dor['status']} - {dor['reason']}"
+    )
 
     st.markdown("---")
+    st.subheader("📑 Executive Summary")
 
+    st.info(
+    f"""
+   • Score General: {score['overall']}/100
+
+   • Definition of Ready: {dor['status']}
+
+   • Casos generados:
+    {len(result['functional'])} funcionales,
+    {len(result['negative'])} negativos,
+    {len(result['edge_cases'])} límite
+
+   • Riesgos identificados:
+    {len(result['risks'])}
+
+   • Ambigüedades detectadas:
+    {len(result['ambiguities'])}
+
+   • Preguntas para refinamiento:
+    {len(result['questions_for_po'])}
+    """
+)
+
+    effort = result["qa_effort"]
+    st.markdown("---")
+
+    st.subheader("⏱️ QA Estimation")
+
+    e1, e2, e3, e4 = st.columns(4)
+
+    e1.metric(
+    "Complejidad",
+    effort["complexity"]
+)
+
+    e2.metric(
+    "Horas QA",
+    effort["estimated_hours"]
+)
+
+    e3.metric(
+    "Casos Manuales",
+    effort["manual_test_cases"]
+)
+
+    e4.metric(
+    "Automatizables",
+    effort["automation_candidates"]
+)
+
+    st.info(
+    effort["recommendation"]
+)
+
+    st.markdown("---")
 
     # KPIs
 
@@ -429,12 +542,18 @@ if analyze:
         + len(result["edge_cases"])
     )
 
-    st.progress(min(total_tests / 20, 1.0))
+    coverage = min(
+    (total_tests / 15) * 100,
+    100
+)
+
+    st.progress(
+    coverage / 100
+)
 
     st.caption(
-        f"QA Coverage Score: {total_tests} escenarios identificados"
-    )
-
+    f"QA Coverage Score: {coverage:.0f}%"
+)
     # Resultado
 
     st.subheader("📋 Resultado del Análisis")
@@ -447,7 +566,7 @@ if analyze:
     "🤖 Automatización",
     "❓ Ambigüedades",
     "💡 Mejoras",
-    "Preguntas PM"
+    "Questions for Product Team"
 ])
 
     with tab1:
